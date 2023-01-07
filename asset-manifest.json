@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/inflearn_elementary_react/static/css/main.fa8e381f.css",
+    "main.js": "/inflearn_elementary_react/static/js/main.39177c20.js",
+    "static/js/787.44ce1ab4.chunk.js": "/inflearn_elementary_react/static/js/787.44ce1ab4.chunk.js",
+    "index.html": "/inflearn_elementary_react/index.html",
+    "main.fa8e381f.css.map": "/inflearn_elementary_react/static/css/main.fa8e381f.css.map",
+    "main.39177c20.js.map": "/inflearn_elementary_react/static/js/main.39177c20.js.map",
+    "787.44ce1ab4.chunk.js.map": "/inflearn_elementary_react/static/js/787.44ce1ab4.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.fa8e381f.css",
+    "static/js/main.39177c20.js"
+  ]
+}

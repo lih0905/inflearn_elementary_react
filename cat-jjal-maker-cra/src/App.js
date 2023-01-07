@@ -1,0 +1,188 @@
+import React from "react";
+import "./App.css";
+import Title from "./components/Title";
+
+const jsonLocalStorage = {
+  setItem: (key, value) => {
+    localStorage.setItem(key, JSON.stringify(value));
+  },
+  getItem: (key) => {
+    return JSON.parse(localStorage.getItem(key));
+  },
+};
+
+const getCat = async (text) => {
+  const OPEN_API_DOMAIN = "https://cataas.com";
+  const response = await fetch(`${OPEN_API_DOMAIN}/cat/says/${text}?json=true`);
+  const responseJson = await response.json();
+  return `${OPEN_API_DOMAIN}${responseJson.url}`;
+};
+
+const Form = ({ updateMainCat }) => {
+  const includesHangul = (text) => /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/i.test(text);
+  const [value, setValue] = React.useState("");
+  const [errorMessage, setErrorMessage] = React.useState("");
+
+  function handleInputChange(e) {
+    const userValue = e.target.value;
+    setErrorMessage("");
+    if (includesHangul(userValue)) {
+      setErrorMessage("한글은 입력할 수 없습니다.");
+    }
+    setValue(userValue.toUpperCase());
+  }
+
+  async function handleFormSubmit(e) {
+    e.preventDefault();
+    setErrorMessage("");
+
+    if (value === "") {
+      setErrorMessage("빈 값으로 만들 수 없습니다.");
+      return;
+    }
+    await updateMainCat(value);
+    setValue("");
+  }
+
+  return (
+    <form onSubmit={handleFormSubmit}>
+      <input
+        type="text"
+        name="name"
+        placeholder="영어 대사를 입력해주세요"
+        value={value}
+        onChange={handleInputChange}
+      />
+      <button type="submit">생성</button>
+      <p style={{ color: "red" }}>{errorMessage}</p>
+    </form>
+  );
+};
+
+function CatItem(props) {
+  const onFavoredCatClick = () => {
+    navigator.clipboard
+      .writeText(props.img)
+      .then(() => alert("이미지 링크가 복사되었어요!"));
+  };
+
+  return (
+    <li>
+      <img
+        src={props.img}
+        style={{ width: "150px" }}
+        onClick={onFavoredCatClick}
+      />
+    </li>
+  );
+}
+
+function Favorites({ favorites }) {
+  if (favorites.length === 0) {
+    return <p>사진의 하트를 눌러 고양이 사진을 저장해봐요!</p>;
+  }
+  return (
+    <div id="favoritesList">
+      저장한 이미지를 클릭하여 주소를 복사할 수 있어요!
+      <ul className="favorites">
+        {favorites.map((cat) => (
+          <CatItem img={cat} key={cat} />
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+const MainCard = ({ img, onHeartClick, alreadyFavored }) => {
+  const heartIcon = alreadyFavored ? "💖" : "🤍";
+  return (
+    <div className="main-card">
+      <img src={img} alt="" width="400" />
+      <button onClick={onHeartClick}>{heartIcon}</button>
+    </div>
+  );
+};
+
+const DeleteAll = ({ favorites, setFavorites, setAlreadyFavored }) => {
+  function handleDeleteButtonClick() {
+    setFavorites([]);
+    jsonLocalStorage.setItem("favorites", []);
+    setAlreadyFavored(false);
+  }
+
+  if (favorites.length === 0) {
+    return <div />;
+  }
+
+  return <button onClick={handleDeleteButtonClick}>모두 삭제하기</button>;
+};
+
+const App = () => {
+  const CAT1 = "https://cataas.com/cat/HSENVDU4ZMqy7KQ0/says/react";
+  const CAT2 = "https://cataas.com/cat/BxqL2EjFmtxDkAm2/says/inflearn";
+  const CAT3 = "https://cataas.com/cat/18MD6byVC1yKGpXp/says/JavaScript";
+
+  const [counter, setCounter] = React.useState(() => {
+    return jsonLocalStorage.getItem("counter") || 0;
+  });
+  const [mainCat, setMainCat] = React.useState("");
+  const [favorites, setFavorites] = React.useState(() => {
+    return jsonLocalStorage.getItem("favorites") || [];
+  });
+
+  const [alreadyFavored, setAlreadyFavored] = React.useState(false);
+
+  async function updateMainCat(text) {
+    const gotCat = await getCat(text);
+    setMainCat(gotCat);
+    setAlreadyFavored(false);
+    const nextCounter = counter + 1;
+    setCounter(nextCounter);
+    jsonLocalStorage.setItem("counter", nextCounter);
+  }
+
+  function handleHeartClick() {
+    if (alreadyFavored) {
+      favorites.pop();
+      setFavorites(favorites);
+      setAlreadyFavored(false);
+      jsonLocalStorage.setItem("favorites", favorites);
+    } else {
+      const nextFavorites = [...favorites, mainCat];
+      setFavorites(nextFavorites);
+      setAlreadyFavored(true);
+      jsonLocalStorage.setItem("favorites", nextFavorites);
+    }
+  }
+
+  async function setInitialCat() {
+    const newCat = await getCat("First cat");
+    setMainCat(newCat);
+  }
+
+  React.useEffect(() => {
+    setInitialCat();
+  }, []);
+
+  const counterTitle = counter === 0 ? "" : counter + "번째 ";
+
+  return (
+    <div>
+      <Title>{counterTitle} 고양이 가라사대</Title>
+      <Form updateMainCat={updateMainCat} />
+      <MainCard
+        img={mainCat}
+        onHeartClick={handleHeartClick}
+        alreadyFavored={alreadyFavored}
+      />
+      <Favorites favorites={favorites} />
+      <DeleteAll
+        favorites={favorites}
+        setFavorites={setFavorites}
+        setAlreadyFavored={setAlreadyFavored}
+      />
+    </div>
+  );
+};
+
+export default App;
